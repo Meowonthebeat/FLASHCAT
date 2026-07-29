@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FLASHCAT - Flashcard Tiếng Trung</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f5f8fc;color:#17202b;font-family:Arial,"Noto Sans",sans-serif}
+.app{max-width:1100px;margin:auto;padding:18px 20px 50px}.topbar,.panel{background:#fff;border:1px solid #e2e8f0;border-radius:22px;box-shadow:0 8px 25px #0000000b}
+.topbar{padding:16px 22px}.toprow{display:flex;align-items:center;gap:18px;flex-wrap:wrap}.spacer{flex:1}.stats,.counter{font-size:18px;font-weight:800}.linkbtn{border:0;background:none;color:#0891d1;font-weight:700;cursor:pointer}
+.mode{display:flex;gap:8px;align-items:center;font-weight:700}.switch{width:42px;height:24px;border-radius:20px;background:#cbd5e1;position:relative;cursor:pointer}.switch:after{content:"";position:absolute;width:20px;height:20px;left:2px;top:2px;background:white;border-radius:50%;transition:.2s}.switch.on{background:#22c55e}.switch.on:after{left:20px}
+.progress{height:9px;background:#e9eef3;border-radius:9px;margin-top:14px;overflow:hidden}.progressbar{height:100%;background:#55d000;width:0;transition:.3s}
+.card-wrap{display:flex;justify-content:center;margin:24px 0}.card{width:min(760px,94vw);height:500px;perspective:1200px;cursor:pointer}.card-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .55s}.card.flipped .card-inner{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;border-radius:30px;box-shadow:0 18px 40px #0002;padding:42px;display:flex;flex-direction:column;justify-content:center;align-items:center;overflow:auto}.front{background:linear-gradient(135deg,#607ce4,#7a49a9);color:#fff}.back{background:#fff;transform:rotateY(180deg);align-items:stretch;color:#17202b}
+.word{font-size:70px;font-weight:800;text-align:center;margin-bottom:18px}.tag{background:#ffffff30;border-radius:22px;padding:8px 18px;font-weight:700}.hint{position:absolute;bottom:25px;color:#ffffffcc}.back h2{text-align:center;margin:0 0 18px;font-size:32px}.info{display:grid;gap:10px}.info div{padding:11px 14px;border-radius:11px;background:#f6f8fb;line-height:1.5}.info b{color:#4f46e5}
+.controls{display:flex;justify-content:center;align-items:center;gap:14px;flex-wrap:wrap}.nav{border:0;background:none;color:#4aa6d7;font-weight:800;font-size:17px;cursor:pointer}.action,.upload-btn{border:0;background:#51d000;color:#fff;border-radius:26px;padding:12px 24px;font-weight:800;cursor:pointer}.sound{width:58px;height:48px;border:0;background:#51d000;color:#fff;border-radius:25px;font-size:20px;cursor:pointer}.keyboard{text-align:center;color:#9aaabd;font-size:13px;margin:10px 0 25px}
+.panel{padding:22px;margin-top:22px}.panel h2{margin:0 0 12px}.note{color:#64748b;font-size:14px;line-height:1.55}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field{display:flex;flex-direction:column;gap:6px}.field label{font-weight:700}.full{grid-column:1/-1}
+input,textarea{font:inherit;border:1px solid #d5dde7;border-radius:10px;padding:11px 13px;outline:none}textarea{min-height:130px;resize:vertical}input:focus,textarea:focus{border-color:#6366f1}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:13px}.secondary{border:0;background:#eaf0f6;color:#334155;border-radius:10px;padding:11px 16px;font-weight:700;cursor:pointer}
+.filebox{border:2px dashed #b7c7d8;border-radius:16px;padding:20px;text-align:center;background:#fbfdff}.filebox input{display:none}.file-label{display:inline-block;background:#edf2f7;padding:12px 18px;border-radius:11px;font-weight:700;cursor:pointer}
+.status{display:none;margin-top:13px;padding:12px;border-radius:10px;background:#f4f7fa}.status.show{display:block}.preview{display:none;max-height:330px;overflow:auto;border:1px solid #e5e9ee;border-radius:11px;margin-top:14px}.preview table{border-collapse:collapse;width:100%}.preview th,.preview td{padding:9px;border-bottom:1px solid #edf0f3;text-align:left;font-size:13px}.preview th{background:#f5f7fa;position:sticky;top:0}
+.word-list{max-height:370px;overflow:auto;border:1px solid #e5e9ee;border-radius:11px;margin-top:12px}.word-item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid #edf0f3}.word-item:last-child{border-bottom:0}.word-item small{color:#64748b}.delete{border:0;background:#fee2e2;color:#b91c1c;border-radius:8px;padding:7px 10px;cursor:pointer}
+.toast{position:fixed;right:20px;bottom:20px;background:#1f2937;color:#fff;padding:12px 17px;border-radius:11px;opacity:0;transform:translateY(10px);transition:.25s}.toast.show{opacity:1;transform:none}
+@media(max-width:700px){.app{padding:10px}.grid{grid-template-columns:1fr}.full{grid-column:auto}.card{height:470px}.word{font-size:52px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="topbar">
+<div class="toprow">
+<div class="stats">🪙 <span id="score">0</span></div><div class="counter"><span id="current">1</span> / <span id="total">0</span></div><div class="spacer"></div>
+<div class="mode">Từ → Nghĩa <span id="modeSwitch" class="switch"></span></div>
+<button class="linkbtn" onclick="restart()">↻ Chơi lại</button>
+</div><div class="progress"><div id="progressBar" class="progressbar"></div></div>
+</header>
+
+<div class="card-wrap">
+<div class="card" id="card" onclick="flipCard()"><div class="card-inner">
+<div class="face front" id="front"></div><div class="face back" id="back"></div>
+</div></div></div>
+
+<div class="controls">
+<button class="nav" onclick="prevCard()">← Trước</button>
+<button class="sound" onclick="event.stopPropagation();speakCurrent()">🔊</button>
+<button class="action" onclick="event.stopPropagation();markForgot()">× Quên</button>
+<button class="action" onclick="event.stopPropagation();markKnown()">✓ Thuộc</button>
+<button class="nav" onclick="nextCard()">Tiếp →</button>
+</div>
+<div class="keyboard">Space: lật thẻ · ←/→: chuyển thẻ · S: phát âm · 1/X: Quên · 2/C: Thuộc</div>
+
+<section class="panel">
+<h2>✍️ Nhập từ bằng văn bản</h2>
+<p class="note">
+Có thể nhập từ <b>3 đến 6 trường</b>, mỗi dòng một từ, ngăn cách bằng dấu <b>|</b>.<br>
+<b>3 trường:</b> Tiếng Trung | Pinyin | Nghĩa<br>
+<b>4 trường:</b> Tiếng Trung | Pinyin | Nghĩa | Ví dụ<br>
+<b>5 trường:</b> Tiếng Trung | Pinyin | Từ loại | Nghĩa | Ví dụ<br>
+<b>6 trường:</b> Tiếng Trung | Pinyin | Từ loại | Nghĩa | Ví dụ | Mẹo nhớ
+</p>
+<textarea id="bulk" placeholder="四面八方 | sì miàn bā fāng | Bốn phương tám hướng
+犹豫 | yóu yù | Do dự, chần chừ
+面临 | miàn lín | Đối mặt | 我们正面临一个新的挑战
+不假思索 | bù jiǎ sī suǒ | Thành ngữ | Không cần suy nghĩ | 他不假思索地回答 | 不假=không cần + 思索=suy nghĩ"></textarea>
+<div class="row"><button class="action" onclick="importBulk()">📥 Nhập danh sách</button><button class="secondary" onclick="clearBulk()">Xóa</button></div>
+<div id="bulkStatus" class="status"></div>
+</section>
+
+<section class="panel">
+<h2>➕ Thêm từng từ</h2>
+<div class="grid">
+<div class="field"><label>Tiếng Trung *</label><input id="hanzi"></div>
+<div class="field"><label>PINYIN *</label><input id="pinyin"></div>
+<div class="field"><label>Từ loại</label><input id="type"></div>
+<div class="field"><label>Nghĩa *</label><input id="meaning"></div>
+<div class="field full"><label>Ví dụ (không bắt buộc)</label><input id="example"></div>
+<div class="field full"><label>Mẹo nhớ (không bắt buộc)</label><input id="memory"></div>
+</div>
+<div class="row"><button class="action" onclick="addWord()">➕ Thêm từ</button><button class="secondary" onclick="clearForm()">Xóa</button></div>
+</section>
+
+<section class="panel">
+<h2>📊 Nhập danh sách từ bằng Excel</h2>
+<p class="note">
+Tải trực tiếp file <b>.xlsx</b> hoặc <b>.xls</b>. Các cột bắt buộc: <b>Tiếng Trung, PINYIN, Nghĩa</b>.
+Cột <b>Ví dụ</b> không bắt buộc. Có thể dùng các tên tương đương như <b>Chữ Hán/Hanzi/中文</b> và <b>Meaning/Nghĩa</b>.
+</p>
+<div class="row"><button class="secondary" onclick="downloadTemplate()">📥 Tải Excel mẫu</button></div>
+<div class="filebox">
+<label class="file-label" for="excelFile">📂 Chọn file Excel (.xlsx, .xls)</label>
+<input id="excelFile" type="file" accept=".xlsx,.xls" onchange="handleExcel(this.files[0])">
+<p id="fileName" class="note">Chưa chọn file</p>
+</div>
+<div id="excelStatus" class="status"></div><div id="excelPreview" class="preview"></div>
+<div class="row"><button id="addExcelBtn" class="action" style="display:none" onclick="addExcelWords()">➕ Thêm từ hợp lệ vào Flashcard</button></div>
+</section>
+
+<section class="panel">
+<h2>📚 Danh sách từ (<span id="listCount">0</span>)</h2>
+<input id="search" placeholder="🔍 Tìm chữ Hán, Pinyin hoặc nghĩa..." oninput="renderList()">
+<div class="word-list" id="wordList"></div>
+</section>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- SheetJS: đọc trực tiếp .xlsx/.xls -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+const defaultWords=[
+["四面八方","sì miàn bā fāng","Thành ngữ","Bốn phương tám hướng, khắp nơi","从四面八方传来了阵阵“喂……”的回声","四面=4 mặt + 八方=8 phương"],
+["不假思索","bù jiǎ sī suǒ","Thành ngữ","Không cần suy nghĩ, không mảy may do dự","驾驶者不假思索地答道……","不假=không cần + 思索=suy nghĩ"],
+["语无伦次","yǔ wú lún cì","Thành ngữ","Nói năng lộn xộn, không mạch lạc","喝多了，说话总是语无伦次的","",""],
+["融为一体","róng wéi yī tǐ","Thành ngữ","Hòa làm một, hòa quyện vào nhau","将人与自然融为一体","",""],
+["迷惑不解","mí huò bù jiě","Thành ngữ","Hoang mang, khó hiểu","他迷惑不解地问","",""],
+["不知所措","bù zhī suǒ cuò","Thành ngữ","Bối rối, không biết phải làm sao","书店老板一时不知所措","",""],
+["斤斤计较","jīn jīn jì jiào","Thành ngữ","So đo tính toán, chi li từng tí","很少有“80后”会为了薪水斤斤计较","",""],
+["一事无成","yī shì wú chéng","Thành ngữ","Không làm nên trò trống gì","几年下来，依然一事无成","",""],
+["若有所思","ruò yǒu suǒ sī","Thành ngữ","Có vẻ như đang suy nghĩ điều gì đó","青年若有所思地点了点头","",""],
+["恍然大悟","huǎng rán dà wù","Thành ngữ","Bỗng nhiên tỉnh ngộ, chợt nhận ra","青年恍然大悟","",""],
+["删繁就简","shān fán jiù jiǎn","Thành ngữ","Bớt rườm rà, giữ lại cái đơn giản/cốt lõi","只有删繁就简，从最近的目标开始","",""],
+["半途而废","bàn tú ér fèi","Thành ngữ","Bỏ cuộc giữa chừng","万事挂怀，只会半途而废","",""],
+["安安稳稳","ān ān wěn wěn","Từ láy","Bình yên, an ổn","靠呆在家里安安稳稳地看电视","",""],
+["如愿以偿","rú yuàn yǐ cháng","Thành ngữ","Được như ý nguyện","今天晚上我就让你如愿以偿","",""],
+["妙不可言","miào bù kě yán","Thành ngữ","Tuyệt diệu không nói nên lời","真是妙不可言","",""],
+["一动不动","yī dòng bù dòng","Thành ngữ","Không nhúc nhích, đứng im","一动不动地看着酒店","",""],
+["犹豫","yóu yù","Động từ","Do dự, chần chừ","","",""],
+["面临","miàn lín","Động từ","Đối mặt với, đứng trước","","",""],
+["逃避","táo bì","Động từ","Trốn tránh, né tránh","","",""],
+["冷漠","lěng mò","Tính từ","Lạnh nhạt, thờ ơ","","",""],
+["不妨","bù fáng","Phó từ","Không ngại gì, cứ thử xem","不妨问问自己","",""],
+["执照","zhí zhào","Danh từ","Giấy phép","驾驶执照","",""],
+["正宗","zhèng zōng","Tính từ","Chính tông, chính gốc, đúng chuẩn","最正宗的川菜","",""],
+["设想","shè xiǎng","Động từ/Danh từ","Giả định, tưởng tượng; ý tưởng","","",""],
+["倾诉","qīng sù","Động từ","Dốc bầu tâm sự, bộc bạch","他向智者倾诉自己的烦恼","",""],
+["导致","dǎo zhì","Động từ","Dẫn đến, gây ra","导致学习成绩下降","",""],
+["沸腾","fèi téng","Động từ/Tính từ","Sôi sục, sục sôi","","",""],
+["绘制","huì zhì","Động từ","Vẽ, phác họa","绘制地图","",""],
+["交界","jiāo jiè","Danh từ","Ranh giới, nơi tiếp giáp","","",""],
+["题材","tí cái","Danh từ","Đề tài, chủ đề sáng tác","","",""],
+["欢呼","huān hū","Động từ","Hoan hô, reo hò","人们为胜利欢呼","",""],
+["遍布","biàn bù","Động từ","Phân bố khắp nơi","公园里遍布着各种各样的花","",""],
+["承担","chéng dān","Động từ","Gánh vác, đảm đương, chịu trách nhiệm","","",""],
+["阻止","zǔ zhǐ","Động từ","Ngăn cản, ngăn chặn","","",""],
+["忽视","hū shì","Động từ","Xem nhẹ, lơ là, phớt lờ","","",""],
+["安慰","ān wèi","Động từ/Danh từ","An ủi","","",""],
+["限制","xiàn zhì","Động từ","Hạn chế, giới hạn","","",""],
+["包含","bāo hán","Động từ","Bao hàm, chứa đựng","","",""],
+["情绪","qíng xù","Danh từ","Cảm xúc, tâm trạng","","",""],
+["幻想","huàn xiǎng","Động từ/Danh từ","Ảo tưởng, mộng tưởng","","",""],
+["模糊","mó hu","Tính từ/Động từ","Mơ hồ, không rõ ràng","","",""],
+["夸张","kuā zhāng","Động từ/Tính từ","Khoa trương, phóng đại","","",""],
+["规模","guī mó","Danh từ","Quy mô","","",""],
+["危害","wēi hài","Danh từ/Động từ","Tác hại, mối nguy hiểm; gây hại","","",""],
+["豪华","háo huá","Tính từ","Hào hoa, sang trọng, xa hoa","","",""],
+["充足","chōng zú","Tính từ","Đầy đủ, dồi dào","","",""],
+["业余","yè yú","Tính từ/Danh từ","Nghiệp dư; lúc rảnh rỗi","业余时间","",""]
+].map(x=>({hanzi:x[0],pinyin:x[1],type:x[2],meaning:x[3],example:x[4],memory:x[5],known:false}));
+
+let words=JSON.parse(localStorage.getItem("cnFlashcards")||"null")||defaultWords;
+let index=0,flipped=false,score=0,reverse=false,excelPending=[];
+
+function save(){localStorage.setItem("cnFlashcards",JSON.stringify(words))}
+function render(){
+if(!words.length){document.getElementById("front").innerHTML='<div class="word">Chưa có từ</div>';document.getElementById("back").innerHTML='<h2>Hãy thêm từ mới</h2>';document.getElementById("total").textContent=0;renderList();return}
+index=Math.max(0,Math.min(index,words.length-1));let w=words[index];
+document.getElementById("total").textContent=words.length;document.getElementById("current").textContent=index+1;document.getElementById("score").textContent=score;
+document.getElementById("progressBar").style.width=((index+1)/words.length*100)+"%";
+document.getElementById("front").innerHTML=reverse?`<div class="word">${esc(w.meaning)}</div><div class="tag">NGHĨA TIẾNG VIỆT</div>`:`<div class="word">${esc(w.hanzi)}</div><div class="tag">${esc(w.type||"TỪ VỰNG")}</div><div class="hint">Nhấn Space hoặc click để lật</div>`;
+document.getElementById("back").innerHTML=`<h2>${esc(w.hanzi)}</h2><div class="info"><div><b>Pinyin:</b> ${esc(w.pinyin)}</div><div><b>Từ loại:</b> ${esc(w.type||"—")}</div><div><b>Nghĩa:</b> ${esc(w.meaning)}</div><div><b>Ví dụ:</b> ${esc(w.example||"—")}</div><div><b>Mẹo nhớ:</b> ${esc(w.memory||"—")}</div></div>`;
+document.getElementById("card").classList.toggle("flipped",flipped);renderList()
+}
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function flipCard(){flipped=!flipped;document.getElementById("card").classList.toggle("flipped",flipped)}
+function nextCard(){if(!words.length)return;index=(index+1)%words.length;flipped=false;render()}
+function prevCard(){if(!words.length)return;index=(index-1+words.length)%words.length;flipped=false;render()}
+function markKnown(){if(!words.length)return;words[index].known=true;score++;save();toast("✓ Đã đánh dấu Thuộc");nextCard()}
+function markForgot(){if(!words.length)return;words[index].known=false;score=Math.max(0,score-1);save();toast("× Đã đánh dấu Quên");nextCard()}
+function restart(){index=0;score=0;flipped=false;render();toast("Đã chơi lại")}
+function parseLine(line){
+let p=line.split("|").map(x=>x.trim());if(p.length<3)return null;
+if(p.length===3)return {hanzi:p[0],pinyin:p[1],type:"",meaning:p[2],example:"",memory:"",known:false};
+if(p.length===4)return {hanzi:p[0],pinyin:p[1],type:"",meaning:p[2],example:p[3],memory:"",known:false};
+if(p.length===5)return {hanzi:p[0],pinyin:p[1],type:p[2],meaning:p[3],example:p[4],memory:"",known:false};
+return {hanzi:p[0],pinyin:p[1],type:p[2],meaning:p[3],example:p[4],memory:p[5]||"",known:false}
+}
+function importBulk(){
+let text=document.getElementById("bulk").value.trim();if(!text){toast("Chưa có dữ liệu");return}
+let good=[],bad=0;text.split(/\r?\n/).filter(x=>x.trim()).forEach(line=>{let w=parseLine(line);if(w&&w.hanzi&&w.pinyin&&w.meaning)good.push(w);else bad++});
+if(!good.length){toast("Không tìm thấy dòng hợp lệ");return}
+words.push(...good);index=words.length-good.length;flipped=false;save();render();
+document.getElementById("bulkStatus").className="status show";document.getElementById("bulkStatus").innerHTML=`✅ Đã thêm <b>${good.length}</b> từ.${bad?` ⚠️ Bỏ qua <b>${bad}</b> dòng lỗi.`:""}`;toast(`Đã thêm ${good.length} từ`)
+}
+function clearBulk(){document.getElementById("bulk").value=""}
+function val(id){return document.getElementById(id).value.trim()}
+function addWord(){
+let w={hanzi:val("hanzi"),pinyin:val("pinyin"),type:val("type"),meaning:val("meaning"),example:val("example"),memory:val("memory"),known:false};
+if(!w.hanzi||!w.pinyin||!w.meaning){toast("Cần nhập Tiếng Trung, Pinyin và Nghĩa");return}
+words.push(w);index=words.length-1;flipped=false;save();clearForm();render();toast("Đã thêm từ mới")
+}
+function clearForm(){["hanzi","pinyin","type","meaning","example","memory"].forEach(id=>document.getElementById(id).value="")}
+function renderList(){
+let q=(document.getElementById("search")?.value||"").toLowerCase();
+let list=words.map((w,i)=>({w,i})).filter(x=>[x.w.hanzi,x.w.pinyin,x.w.meaning].join(" ").toLowerCase().includes(q));
+document.getElementById("listCount").textContent=words.length;
+document.getElementById("wordList").innerHTML=list.map(x=>`<div class="word-item"><div><b>${esc(x.w.hanzi)}</b> <small>${esc(x.w.pinyin)} · ${esc(x.w.meaning)}</small></div><button class="delete" onclick="deleteWord(${x.i})">Xóa</button></div>`).join("")||"<div style='padding:15px'>Không tìm thấy từ.</div>"
+}
+function deleteWord(i){if(!confirm("Xóa từ này?"))return;words.splice(i,1);index=Math.min(index,Math.max(0,words.length-1));save();render();toast("Đã xóa")}
+function speakCurrent(){if(!words.length)return;let u=new SpeechSynthesisUtterance(words[index].hanzi);u.lang="zh-CN";speechSynthesis.cancel();speechSynthesis.speak(u)}
+function toast(m){let t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1800)}
+
+function downloadTemplate(){
+if(typeof XLSX==="undefined"){toast("Thư viện Excel chưa tải xong");return}
+let data=[["Tiếng Trung","PINYIN","Nghĩa","Ví dụ"],["四面八方","sì miàn bā fāng","Bốn phương tám hướng","从四面八方传来了阵阵回声"],["犹豫","yóu yù","Do dự, chần chừ","他犹豫了很久"]];
+let ws=XLSX.utils.aoa_to_sheet(data),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Từ vựng");XLSX.writeFile(wb,"mau_danh_sach_tu_vung.xlsx")
+}
+function normalize(s){return String(s||"").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"")}
+function findCol(headers,names){return headers.findIndex(h=>names.some(n=>normalize(h).includes(normalize(n))))}
+function handleExcel(file){
+if(!file)return;
+document.getElementById("fileName").textContent=file.name;
+if(typeof XLSX==="undefined"){showExcelStatus("❌ Không tải được thư viện đọc Excel. Hãy kiểm tra kết nối mạng và tải lại trang.");return}
+let reader=new FileReader();
+reader.onload=e=>{
+try{
+let wb=XLSX.read(e.target.result,{type:"array"}),sheet=wb.Sheets[wb.SheetNames[0]],rows=XLSX.utils.sheet_to_json(sheet,{header:1,defval:""});
+if(!rows.length){showExcelStatus("❌ File Excel không có dữ liệu.");return}
+let headers=rows[0].map(String);
+let hi=findCol(headers,["tiếng trung","chữ hán","hanzi","中文","chinese"]),pi=findCol(headers,["pinyin"]),mi=findCol(headers,["nghĩa","meaning","vietnamese"]),ei=findCol(headers,["ví dụ","example"]);
+if(hi<0||pi<0||mi<0){showExcelStatus("❌ Không tìm thấy đủ cột bắt buộc. Cần: <b>Tiếng Trung, PINYIN, Nghĩa</b>.");return}
+excelPending=[];let invalid=0;
+rows.slice(1).forEach(r=>{
+let w={hanzi:String(r[hi]||"").trim(),pinyin:String(r[pi]||"").trim(),type:"",meaning:String(r[mi]||"").trim(),example:ei>=0?String(r[ei]||"").trim():"",memory:"",known:false};
+if(w.hanzi&&w.pinyin&&w.meaning)excelPending.push(w);else if(r.some(x=>String(x).trim()))invalid++;
+});
+showExcelStatus(`✅ Hợp lệ: <b>${excelPending.length}</b> từ${invalid?` · ⚠️ Dòng lỗi/thiếu: <b>${invalid}</b>`:""}`);
+let h="<table><tr><th>STT</th><th>Tiếng Trung</th><th>PINYIN</th><th>Nghĩa</th><th>Ví dụ</th></tr>";
+excelPending.forEach((w,i)=>h+=`<tr><td>${i+1}</td><td>${esc(w.hanzi)}</td><td>${esc(w.pinyin)}</td><td>${esc(w.meaning)}</td><td>${esc(w.example||"—")}</td></tr>`);
+h+="</table>";document.getElementById("excelPreview").innerHTML=h;document.getElementById("excelPreview").style.display=excelPending.length?"block":"none";document.getElementById("addExcelBtn").style.display=excelPending.length?"inline-block":"none";
+}catch(err){showExcelStatus("❌ Không thể đọc file Excel: "+esc(err.message))}
+};
+reader.readAsArrayBuffer(file)
+}
+function showExcelStatus(html){let e=document.getElementById("excelStatus");e.className="status show";e.innerHTML=html}
+function addExcelWords(){
+if(!excelPending.length)return;let n=excelPending.length;words.push(...excelPending);index=words.length-n;excelPending=[];save();render();
+document.getElementById("addExcelBtn").style.display="none";document.getElementById("excelPreview").style.display="none";showExcelStatus(`✅ Đã thêm <b>${n}</b> từ vào Flashcard.`);toast(`Đã thêm ${n} từ từ Excel`)
+}
+document.getElementById("modeSwitch").onclick=()=>{reverse=!reverse;flipped=false;render()}
+document.addEventListener("keydown",e=>{
+if(e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA")return;
+if(e.code==="Space"){e.preventDefault();flipCard()}else if(e.key==="ArrowRight")nextCard();else if(e.key==="ArrowLeft")prevCard();else if(e.key.toLowerCase()==="s")speakCurrent();else if(e.key==="1"||e.key.toLowerCase()==="x")markForgot();else if(e.key==="2"||e.key.toLowerCase()==="c")markKnown()
+});
+render();
+</script>
+</body>
+</html>
